@@ -83,20 +83,20 @@ async def main():
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False, args=["--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080"])
-        context = await browser.new_context(accept_downloads=True)
+        context = await browser.new_context(accept_downloads=True, viewport={"width": 1920, "height": 1080})
         page = await context.new_page()
         try:
             # LOGIN
             await page.goto("https://spx.shopee.com.br/")
             await page.wait_for_selector('xpath=//*[@placeholder="Ops ID"]', timeout=15000)
-            await page.locator('xpath=//*[@placeholder="Ops ID"]').fill('ops_id')
-            await page.locator('xpath=//*[@placeholder="Senha"]').fill('ops_senha')
+            await page.locator('xpath=//*[@placeholder="Ops ID"]').fill(ops_id)
+            await page.locator('xpath=//*[@placeholder="Senha"]').fill(ops_senha)
             await page.locator('xpath=/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/form/div/div/button').click()
             await page.wait_for_timeout(15000)
             try:
                 await page.locator('.ssc-dialog-close').click(timeout=5000)
             except:
-                print("Nenhum pop-up foi encontrado.")
+                print("Nenhum pop-up de diálogo foi encontrado.")
                 await page.keyboard.press("Escape")
 
             
