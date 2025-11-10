@@ -93,7 +93,7 @@ def update_packing_google_sheets2(csv_file_path2):
     except Exception as e:
         print(f"Erro durante o processo: {e}")
         
-def update_packing_google_sheets2(csv_file_path3):
+def update_packing_google_sheets3(csv_file_path3):
     try:
         if not os.path.exists(csv_file_path3):
             print(f"Arquivo {csv_file_path3} não encontrado.")
@@ -210,7 +210,7 @@ async def main():
             if new_file_path:
                 update_packing_google_sheets(new_file_path)
                 update_packing_google_sheets2(new_file_path2)
-                update_packing_google_sheets2(new_file_path3)
+                update_packing_google_sheets3(new_file_path3)
                 print("Dados atualizados com sucesso.")
         except Exception as e:
             print(f"Erro durante o processo: {e}")
