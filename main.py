@@ -18,7 +18,7 @@ def rename_downloaded_file(download_dir, download_path):
         current_hour = datetime.now().strftime("%H")
         new_file_name = f"INBOUND-{current_hour}.csv"
         new_file_path = os.path.join(download_dir, new_file_name)
-        if os.path.exists(new_file_path):e
+        if os.path.exists(new_file_path):
             os.remove(new_file_path)
         shutil.move(download_path, new_file_path)
         print(f"Arquivo salvo como: {new_file_path}")
