@@ -16,9 +16,9 @@ ops_senha = os.environ.get('OPS_SENHA')
 def rename_downloaded_file(download_dir, download_path):
     try:
         current_hour = datetime.now().strftime("%H")
-        new_file_name = f"PROD-{current_hour}.csv"
+        new_file_name = f"INBOUND-{current_hour}.csv"
         new_file_path = os.path.join(download_dir, new_file_name)
-        if os.path.exists(new_file_path):
+        if os.path.exists(new_file_path):e
             os.remove(new_file_path)
         shutil.move(download_path, new_file_path)
         print(f"Arquivo salvo como: {new_file_path}")
@@ -30,13 +30,27 @@ def rename_downloaded_file(download_dir, download_path):
 def rename_downloaded_file2(download_dir, download_path2):
     try:
         current_hour = datetime.now().strftime("%H")
-        new_file_name2 = f"WS-{current_hour}.csv"
+        new_file_name2 = f"PROD-{current_hour}.csv"
         new_file_path2 = os.path.join(download_dir, new_file_name2)
         if os.path.exists(new_file_path2):
             os.remove(new_file_path2)
         shutil.move(download_path2, new_file_path2)
         print(f"Arquivo salvo como: {new_file_path2}")
         return new_file_path2
+    except Exception as e:
+        print(f"Erro ao renomear o arquivo: {e}")
+        return None
+
+def rename_downloaded_file3(download_dir, download_path3):
+    try:
+        current_hour = datetime.now().strftime("%H")
+        new_file_name3 = f"WS-{current_hour}.csv"
+        new_file_path3 = os.path.join(download_dir, new_file_name3)
+        if os.path.exists(new_file_path3):
+            os.remove(new_file_path3)
+        shutil.move(download_path3, new_file_path3)
+        print(f"Arquivo salvo como: {new_file_path3}")
+        return new_file_path3
     except Exception as e:
         print(f"Erro ao renomear o arquivo: {e}")
         return None
@@ -55,7 +69,7 @@ def update_packing_google_sheets(csv_file_path):
         df = df.fillna("")
         worksheet1.clear()
         worksheet1.update([df.columns.values.tolist()] + df.values.tolist())
-        print(f"Arquivo enviado com sucesso para a aba 'PROD'.")
+        print(f"Arquivo enviado com sucesso para a aba 'Inbound'.")
         time.sleep(5)
     except Exception as e:
         print(f"Erro durante o processo: {e}")
@@ -74,11 +88,30 @@ def update_packing_google_sheets2(csv_file_path2):
         df = df.fillna("")
         worksheet1.clear()
         worksheet1.update([df.columns.values.tolist()] + df.values.tolist())
+        print(f"Arquivo enviado com sucesso para a aba 'Outbound'.")
+        time.sleep(5)
+    except Exception as e:
+        print(f"Erro durante o processo: {e}")
+        
+def update_packing_google_sheets2(csv_file_path3):
+    try:
+        if not os.path.exists(csv_file_path3):
+            print(f"Arquivo {csv_file_path3} não encontrado.")
+            return
+        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_name("hxh.json", scope)
+        client = gspread.authorize(creds)
+        sheet1 = client.open_by_url("https://docs.google.com/spreadsheets/d/1wj7LJM_RFwf1ZMOIPAAwG2Ax8yAHYCQA6gN-ITlKv3Q/")
+        worksheet1 = sheet1.worksheet("Workstation")
+        df = pd.read_csv(csv_file_path3)
+        df = df.fillna("")
+        worksheet1.clear()
+        worksheet1.update([df.columns.values.tolist()] + df.values.tolist())
         print(f"Arquivo enviado com sucesso para a aba 'WS'.")
         time.sleep(5)
     except Exception as e:
         print(f"Erro durante o processo: {e}")
-
+        
 async def main():        
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     async with async_playwright() as p:
@@ -141,11 +174,43 @@ async def main():
             await download.save_as(download_path2)
             new_file_path2 = rename_downloaded_file2(DOWNLOAD_DIR, download_path2)
 
+
+            #####################################################################
+            
+            # NAVEGAÇÃO E DOWNLOAD 3
+            await page.goto("https://spx.shopee.com.br/#/workstation-assignment")
+            await page.wait_for_timeout(10000)
+            await page.keyboard.press('Escape');
+            await page.locator('xpath=/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[3]/span[1]').click()
+            await page.wait_for_timeout(10000)
+
+            #Input Date
+            d1 = (datetime.now() - timedelta(days=1)).strftime("%Y/%m/%d")
+            date_input = page.get_by_role("textbox", name="Escolha a data de início").nth(0)
+            await date_input.wait_for(state="visible", timeout=10000)
+            await date_input.click(force=True)
+            await date_input.fill(d1)
+            await page.wait_for_timeout(5000)
+            await page.locator('xpath=/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[6]/form[1]/div[4]/button[1]').click()
+            
+            await page.locator('xpath=/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[8]/div[1]/button[1]').click()
+            await page.wait_for_timeout(10000)
+
+            # 👉 Botão de download 3
+            async with page.expect_download() as download_info:
+                await page.locator('xpath=/html/body/span/div/div[1]/div/span/div/div[2]/div[2]/div[1]/div/div[1]/div/div[1]/div[2]/button').click()
+                #await page.get_by_role("button", name="Baixar").nth(0).click()
+            download = await download_info.value
+            download_path3 = os.path.join(DOWNLOAD_DIR, download.suggested_filename)
+            await download.save_as(download_path3)
+            new_file_path3 = rename_downloaded_file3(DOWNLOAD_DIR, download_path3)           
+            
             
             # Atualizar Google Sheets (opcional)
             if new_file_path:
                 update_packing_google_sheets(new_file_path)
                 update_packing_google_sheets2(new_file_path2)
+                update_packing_google_sheets2(new_file_path3)
                 print("Dados atualizados com sucesso.")
         except Exception as e:
             print(f"Erro durante o processo: {e}")
